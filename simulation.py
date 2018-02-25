@@ -10,8 +10,10 @@ import numpy.random
 import tempfile
 import random
 import subprocess
+import math
 
 SIMULATION_COUNT = 600
+# SIMULATION_COUNT = 6000
 
 START_PRICE = 10000
 # Based on highs of average $50 fees.
@@ -63,11 +65,13 @@ class Population(object):
                  crash_function,
                  sell_function,
                  transaction_proportion,
-                 sell_point=2):
+                 sell_point=2,
+                 live_function=None):
         self.crash_function = crash_function
         self.sell_function = sell_function
         self.transaction_proportion = transaction_proportion
         self.sell_point = sell_point
+        self.live_function = live_function
 
     def simulate(self, account_count):
         outcomes = []
@@ -79,7 +83,14 @@ class Population(object):
                               sell_point=self.sell_point)
             while account.increment(crash_point):
                 pass
-            outcomes.append({'fraction': sell_fraction, 'money': account.money})
+            outcome = {
+                'fraction': sell_fraction,
+                'money': account.money,
+            }
+            if self.live_function:
+                if self.live_function(crash_point):
+                    outcome['money'] += account.btc * crash_point
+            outcomes.append(outcome)
         return outcomes
     
 ################################################################################
@@ -228,6 +239,78 @@ print float(len([d for d in real_money if d['money'] < START_PRICE]))/len(real_m
 print ''
 
 ################################################################################
-# double improper beta
+# Bounded cap and survival chance.
 
-# TODO
+random.seed(11)
+numpy.random.seed(11)
+
+# With $100T total market cap, and approximately $100B BTC market cap, we could
+# assume a 1000x cap on BTC price increases, so $10k current -> max $10M.
+MAX_VALUE_BTC = 10000000
+
+def FN_EXP_NORMALIZED():
+    # We just keep trying to find a stop point which fits under our
+    # limit.
+    value = numpy.random.exponential(2)
+    while value > 2:
+        value = numpy.random.exponential(2)
+
+    # Transform the range 0-2 to the log $10k-$10M range.
+    money_value = 10**(1.5*value + 4)
+    assert money_value >= START_PRICE
+    assert money_value <= MAX_VALUE_BTC
+
+    return money_value
+
+def FN_WEIRD_LIVE(crash_point):
+    # This is a weird function: it's not normed, it's not even a
+    # distribution. It's just mapping money to probability BTC
+    # stabilizes instead of crashing, and totally made up.
+    x = (math.log10(crash_point)-math.log10(START_PRICE))/(math.log10(MAX_VALUE_BTC)-math.log10(START_PRICE))
+    survival_probability = (1 - x) * (x - 0.5)**2 + 0.99 * x**4 * 4**(1-x)
+    assert survival_probability < 1.0
+    assert survival_probability > 0.0
+    return random.random() < survival_probability
+
+ideal_population = Population(FN_EXP_NORMALIZED,
+                              lambda: random.random(),
+                              0,
+                              live_function=FN_WEIRD_LIVE)
+ideal_money = ideal_population.simulate(SIMULATION_COUNT)
+
+real_population = Population(FN_EXP,
+                             lambda: random.random(),
+                             TRANSACTION_PROPORTION,
+                             live_function=FN_WEIRD_LIVE)
+# Include more points, since there's more noise.
+real_money = real_population.simulate(2 * SIMULATION_COUNT)
+
+_, ideal_file = tempfile.mkstemp()
+_, real_file = tempfile.mkstemp()
+
+with tempfile.NamedTemporaryFile() as ideal_file, tempfile.NamedTemporaryFile() as real_file:
+    ideal_writer = csv.DictWriter(ideal_file, ['fraction', 'money'])
+    ideal_writer.writeheader()
+    ideal_writer.writerows(ideal_money)
+    ideal_file.flush()
+
+    real_writer = csv.DictWriter(real_file, ['fraction', 'money'])
+    real_writer.writeheader()
+    real_writer.writerows(real_money)
+    real_file.flush()
+
+    # Run ggplot on the output.
+    subprocess.call([
+        'Rscript', 'plot_bounded.R',
+        ideal_file.name, real_file.name, 'plot_bounded.png']
+    )
+
+# Calculate expected money.
+print 'Bounded average:'
+average = sum([d['money'] for d in real_money])/len(real_money)
+print average
+print 'Bounded stdev:'
+print (sum([(average - d['money'])**2 for d in real_money])/(len(real_money)-1))**0.5
+print 'Bounded fraction < start:'
+print float(len([d for d in real_money if d['money'] < START_PRICE]))/len(real_money)
+print ''

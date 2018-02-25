@@ -1,4 +1,5 @@
 library(ggplot2)
+library(scales)
 
 cmd_args = commandArgs(trailingOnly=TRUE)
 
@@ -16,7 +17,7 @@ data <- rbind(ideal_raw, real_raw)
 
 plot = ggplot(data, aes(x=fraction, y=money, color=id)) +
     xlab("Sell fraction") + ylab("$ from 1 BTC") +
-    ylim(0, 75000) +
+    scale_y_log10(labels=comma) +
     geom_point(alpha=0.5)
 plot$labels$colour = ""
 
