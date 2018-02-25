@@ -26,11 +26,11 @@ import random
 import subprocess
 import math
 
+# This strikes a balance between graph readability and amount of data.
 SIMULATION_COUNT = 600
-# SIMULATION_COUNT = 6000
 
 START_PRICE = 10000
-# Based on highs of average $50 fees.
+# Based on highs of average $50 fees for $10k BTC.
 TRANSACTION_PROPORTION = 0.005
 
 LAMBDA = 100000
@@ -110,6 +110,7 @@ class Population(object):
 ################################################################################
 # Normal: l = $100k
 
+# Might as well have deterministic random values.
 random.seed(11)
 numpy.random.seed(11)
 
@@ -192,12 +193,12 @@ with tempfile.NamedTemporaryFile() as ideal_file, tempfile.NamedTemporaryFile() 
     )
 
 # Calculate expected money.
-print '1.1 Normal average:'
+print '1.2 Normal average:'
 average = sum([d['money'] for d in real_money])/len(real_money)
 print average
-print '1.1 Normal stdev:'
+print '1.2 Normal stdev:'
 print (sum([(average - d['money'])**2 for d in real_money])/(len(real_money)-1))**0.5
-print '1.1 Normal fraction < start:'
+print '1.2 Normal fraction < start:'
 print float(len([d for d in real_money if d['money'] < START_PRICE]))/len(real_money)
 print ''
 

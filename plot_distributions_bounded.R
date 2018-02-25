@@ -14,7 +14,8 @@
 ## limitations under the License.
 ################################################################################
 
-# Illustrate the beta distribution behaviors.
+# Illustrate the bounded exponential behaviors.
+# Except it isn't really exponential! Note the log axis.
 
 library(rmutil)
 library(ggplot2)
@@ -26,6 +27,8 @@ xx = seq(10000, 10000000, by=1000)
 x = (log10(xx) - log10(10000))/(log10(10000000) - log10(10000))
 # Re-normalize with the CDF (pexp)
 maxpoint = dexp(2 * x, 2) / pexp(2, 2)
+# This is weird, because it's just me playing around with polynomials
+# until I found one that found good.
 survive = (1 - x) * (x - 0.5)^2 + 0.99 * x^4 * 4^(1-x)
 
 maxDF = data.frame(xx, y=maxpoint)
