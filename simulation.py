@@ -27,7 +27,7 @@ import subprocess
 import math
 
 # This strikes a balance between graph readability and amount of data.
-SIMULATION_COUNT = 600
+SIMULATION_COUNT = 2000
 
 START_PRICE = 10000
 # Based on highs of average $50 fees for $10k BTC.

@@ -33,7 +33,8 @@ data <- rbind(ideal_raw, real_raw)
 plot = ggplot(data, aes(x=fraction, y=money, color=id)) +
     xlab("Sell fraction") + ylab("$ from 1 BTC") +
     ylim(0, 75000) +
-    geom_point(alpha=0.5)
+    geom_jitter(alpha=0.3, size=0.3, height=200) +
+    geom_smooth(method="loess", span=0.5)
 plot$labels$colour = ""
 
 ggsave(output_file, plot)
