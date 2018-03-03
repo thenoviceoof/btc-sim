@@ -41,6 +41,11 @@ def FN_NORMAL():
 def FN_EXP():
     return numpy.random.exponential(LAMBDA - START_PRICE) + START_PRICE
 
+# Might as well have deterministic random values.
+def RESEED():
+    random.seed(11)
+    numpy.random.seed(11)
+
 class Account:
     def __init__(self,
                  sell_fraction,
@@ -110,9 +115,7 @@ class Population(object):
 ################################################################################
 # Normal: l = $100k
 
-# Might as well have deterministic random values.
-random.seed(11)
-numpy.random.seed(11)
+RESEED()
 
 ideal_population = Population(FN_NORMAL,
                               lambda: random.random(),
@@ -157,8 +160,7 @@ print ''
 ################################################################################
 # Normal: l = $100k, 1.2x frequency
 
-random.seed(11)
-numpy.random.seed(11)
+RESEED()
 
 ideal_population = Population(FN_NORMAL,
                               lambda: random.random(),
@@ -210,8 +212,7 @@ print ''
 ################################################################################
 # Exponential: l = $100k
 
-random.seed(11)
-numpy.random.seed(11)
+RESEED()
 
 ideal_population = Population(FN_EXP,
                               lambda: random.random(),
@@ -256,8 +257,7 @@ print ''
 ################################################################################
 # Bounded cap and survival chance.
 
-random.seed(11)
-numpy.random.seed(11)
+RESEED()
 
 # With $100T total market cap, and approximately $100B BTC market cap, we could
 # assume a 1000x cap on BTC price increases, so $10k current -> max $10M.
