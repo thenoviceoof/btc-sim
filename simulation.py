@@ -316,8 +316,14 @@ with tempfile.NamedTemporaryFile() as ideal_file, tempfile.NamedTemporaryFile() 
 
     # Run ggplot on the output.
     subprocess.call([
+        'Rscript', 'plot.R',
+        ideal_file.name, real_file.name, 'plot_bounded_linear.png']
+    )
+
+    # Run ggplot on the output.
+    subprocess.call([
         'Rscript', 'plot_bounded.R',
-        ideal_file.name, real_file.name, 'plot_bounded.png']
+        ideal_file.name, real_file.name, 'plot_bounded_log.png']
     )
 
 # Calculate expected money.
